@@ -52,6 +52,12 @@ const IMAPAccountSchema = new mongoose.Schema({
     tls: {
         type: Boolean,
         required: true,
+        default: true,
+    },
+    authMethod: {
+        type: String,
+        required: true,
+        enum: ['PASSWORD', 'OAUTH'],
     },
 }, {
     timestamps: true
