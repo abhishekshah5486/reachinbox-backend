@@ -83,9 +83,68 @@ const retrieveIMAPStatus = async (email, userId) => {
     }
 }
 
+const startIDLE = (email, onNewMail) => {
+    if (!activeConnections.has(email)) {
+        console.error( `IMAP connection not active for ${email}`);
+        return;
+    }
+    const imapClient = activeConnections.get(email);
+    imapClient.on('mail', () => {
+        console.log(`New mail detected for ${email}. Fetching latest email...`);
+        fetchLatestEmail(imapClient, onNewMail);
+    });
+}
+
+const fetchLatestEmail = (imapClient, onNewMail) => {
+
+    imapClient.search(["UNSEEN"], (err, results) => {
+        if (err || results.length === 0) return;
+        const latestUID = Math.max(...results);
+
+        const fetch = imapClient.fetch([latestUID], { bodies: "", markSeen: true });
+
+        fetch.on("message", (msg) => {
+            let folderName = "NA"; // Default if folder isn't available
+
+            msg.on("attributes", (attrs) => {
+                if (attrs["x-gm-labels"]) {
+                    folderName = attrs["x-gm-labels"].join(", "); // Gmail folders (labels)
+                } else if (attrs["envelope"]) {
+                    folderName = attrs["envelope"].mailbox || "INBOX"; // Other providers
+                }
+            });
+            msg.on("body", (stream) => {
+                simpleParser(stream, async (err, parsed) => {
+                    if (err) return console.error("Parsing error:", err);
+
+                    const newEmail = {
+                        id: latestUID,
+                        folder: folderName,
+                        date: parsed.date,
+                        from: parsed.from.text,
+                        to: parsed.to.text,
+                        subject: parsed.subject,
+                        text: parsed.text,
+                        html: parsed.html,
+                    };
+
+                    console.log(`New Email Received: ${parsed.subject}`);
+                    onNewMail(newEmail);
+                });
+            });
+        });
+
+        fetch.once("end", () => {
+            console.log("Processed new email...");
+        });
+    });
+}
+
 module.exports = { 
     activeConnections,
     connectToIMAP, 
     disconnectFromIMAP, 
     retrieveIMAPStatus,
+    startIDLE,
+    fetchLatestEmail,
 };

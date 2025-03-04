@@ -176,3 +176,11 @@ exports.retrieveIMAPStatus = async (req, res) => {
         
     }
 }
+
+exports.enableRealTimeUpdates = async (req, res) => {
+    try {
+        
+    } catch (error) {
+        
+    }
+}

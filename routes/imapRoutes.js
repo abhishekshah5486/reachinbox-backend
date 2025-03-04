@@ -12,5 +12,8 @@ router.post('/disconnect/:userId', imapControllers.disconnectIMAPAccount);
 // Email Id is passed as a query param
 router.get('/status/:userId', imapControllers.retrieveIMAPStatus);
 
+// Route for real time updates using IDLE for a specific account
+router.get('/realtime/:email', imapControllers.enableRealTimeUpdates);
+
 module.exports = router;
 
