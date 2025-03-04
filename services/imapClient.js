@@ -1,6 +1,7 @@
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 const IMAPAccountModel = require('../models/IMAPAccountModel');
+const activeConnections = new Map();
 
 const connectToIMAP = async (IMAPAccount) => {
 
@@ -25,6 +26,7 @@ const connectToIMAP = async (IMAPAccount) => {
                 console.log("IMAP active for ", IMAPAccount.email);
                 IMAPAccount.isActiveConnection = true;
                 await IMAPAccountModel.updateOne({email: IMAPAccount.email}, {isActiveConnection: true});
+                activeConnections.set(IMAPAccount.email, imapClient);
                 resolve(`IMAP connection established for ${IMAPAccount.email}`);
             })  
             
@@ -37,6 +39,7 @@ const connectToIMAP = async (IMAPAccount) => {
             imapClient.once("end", async () => {
                 console.log(`IMAP connection closed: ${IMAPAccount.email}`);
                 await IMAPAccountModel.updateOne({email: IMAPAccount.email}, {isActiveConnection: false});
+                activeConnections.delete(IMAPAccount.email);
             })
             imapClient.connect();
 
@@ -47,4 +50,25 @@ const connectToIMAP = async (IMAPAccount) => {
     return IMAPPromise;
 }
 
-module.exports = { connectToIMAP };
+const disconnectFromIMAP = async (IMAPAccount) => {
+    try {
+
+        if (!IMAPAccount.isActiveConnection) {
+            return `IMAP connection already inactive for ${IMAPAccount.email}`;
+        }
+        const imapClient = activeConnections.get(IMAPAccount.email);
+        imapClient.end();
+        await IMAPAccountModel.updateOne({email: IMAPAccount.email}, {isActiveConnection: false});
+        activeConnections.delete(IMAPAccount.email);
+
+        console.log(`IMAP connection closed for ${IMAPAccount.email}`);
+        return `IMAP connection closed for ${IMAPAccount.email}`;
+
+    } catch (error) {
+
+        return error.message;
+        
+    }
+}
+
+module.exports = { connectToIMAP, disconnectFromIMAP };

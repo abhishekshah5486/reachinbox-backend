@@ -1,16 +1,11 @@
-// const bcrypt = require('bcryptjs');
 const IMAPAccountModel = require('../models/IMAPAccountModel');
-const { connectToIMAP } = require('../services/imapClient');
+const { connectToIMAP, disconnectFromIMAP } = require('../services/imapClient');
 
 exports.addIMAPAccount = async (req, res) => {
     try {
         const userId = req.params.userId;
         const {email, imapHost, imapPort, imapPassword, imapUsername, tls} = req.body;
         const existingAccount = await IMAPAccountModel.findOne({email: email});
-
-        // const saltRounds = await bcrypt.genSalt(10);
-        // const hashedPassword = await bcrypt.hash(imapPassword, saltRounds);
-        // req.body.imapPassword = hashedPassword;
 
         if (existingAccount) {
             
@@ -114,6 +109,38 @@ exports.connectIMAPAccount = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Error connecting IMAP account. Please try again later.",
+            error: error.message
+        });
+        
+    }
+}
+
+exports.disconnectIMAPAccount = async (req, res) => {
+    try {
+        
+        const { email } = req.query;
+        const { userId } = req.params;
+
+        const IMAPAccount = await IMAPAccountModel.findOne({email: email, userId: userId});
+        if (!IMAPAccount) {
+            return res.status(400).json({
+                success: false,
+                message: "IMAP account not found."
+            })
+        }  
+        const disconnectionResult = await disconnectFromIMAP(IMAPAccount);
+        console.log(disconnectionResult);
+        res.status(200).json({
+            success: true,
+            message: "IMAP disconnection successful.",
+            data: disconnectionResult,
+        })
+
+    } catch (error) {
+        
+        return res.status(500).json({
+            success: false,
+            message: "Error disconnecting IMAP account. Please try again later.",
             error: error.message
         });
         
