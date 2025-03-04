@@ -87,3 +87,35 @@ exports.connectAllIMAPAccounts = async (req, res) => {
         
     }
 }
+
+exports.connectIMAPAccount = async (req, res) => {
+    try {
+        
+        const { email } = req.query;
+        const { userId } = req.params;
+
+        const IMAPAccount = await IMAPAccountModel.findOne({email: email, userId: userId});
+        if (!IMAPAccount) {
+            return res.status(400).json({
+                success: false,
+                message: "IMAP account not found."
+            })
+        }  
+        const connectionResult = await connectToIMAP(IMAPAccount);
+        console.log(connectionResult);
+        res.status(200).json({
+            success: true,
+            message: "IMAP connection successful.",
+            data: connectionResult,
+        })
+
+    } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: "Error connecting IMAP account. Please try again later.",
+            error: error.message
+        });
+        
+    }
+}
