@@ -1,5 +1,5 @@
 const IMAPAccountModel = require('../models/IMAPAccountModel');
-const { connectToIMAP, disconnectFromIMAP } = require('../services/imapClient');
+const { connectToIMAP, disconnectFromIMAP, startIDLE } = require('../services/imapClient');
 
 exports.addIMAPAccount = async (req, res) => {
     try {
@@ -180,7 +180,46 @@ exports.retrieveIMAPStatus = async (req, res) => {
 exports.enableRealTimeUpdates = async (req, res) => {
     try {
         
+        const { email } = req.query;
+        const { userId } = req.params;
+
+        const IMAPAccount = await IMAPAccountModel.findOne({email: email, userId: userId});
+        if (!IMAPAccount) {
+            return res.status(400).json({
+                success: false,
+                message: "IMAP account not found."
+            })
+        }
+        if (!IMAPAccount.isActiveConnection) {
+            return res.status(400).json({
+                success: false,
+                message: "IMAP connection is not active.",
+                resolution: "Please connect to IMAP account first."
+            })
+        }
+        // Setting headers for server-sent events
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Connection", "keep-alive");
+
+        // Start IDLE
+        startIDLE(email, (newMail) => {
+            res.write(`data: ${JSON.stringify(newMail)}\n\n`);
+        });
+        
+        // Close connection on client disconnect
+        req.on("close", () => {
+            console.log(`Client disconnected from real-time updates for ${email}`);
+            res.end();
+        });
+
     } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: "Error enabling real-time updates. Please try again later.",
+            error: error.message
+        });
         
     }
 }

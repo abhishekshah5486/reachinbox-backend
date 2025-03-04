@@ -89,9 +89,17 @@ const startIDLE = (email, onNewMail) => {
         return;
     }
     const imapClient = activeConnections.get(email);
-    imapClient.on('mail', () => {
-        console.log(`New mail detected for ${email}. Fetching latest email...`);
-        fetchLatestEmail(imapClient, onNewMail);
+    imapClient.openBox("INBOX", false, (err, mailbox) => {
+        if (err) {
+            console.error("Error opening mailbox: ", err);
+            return;
+        }
+        imapClient.once("mail", (numNewMsgs) => {
+            console.log(`New email detected (${numNewMsgs} new) for ${email}. Fetching latest email...`);
+            fetchLatestEmail(imapClient, onNewMail);
+        });
+        console.log(`IDLE started for ${email}`);
+
     });
 }
 
@@ -104,22 +112,13 @@ const fetchLatestEmail = (imapClient, onNewMail) => {
         const fetch = imapClient.fetch([latestUID], { bodies: "", markSeen: true });
 
         fetch.on("message", (msg) => {
-            let folderName = "NA"; // Default if folder isn't available
-
-            msg.on("attributes", (attrs) => {
-                if (attrs["x-gm-labels"]) {
-                    folderName = attrs["x-gm-labels"].join(", "); // Gmail folders (labels)
-                } else if (attrs["envelope"]) {
-                    folderName = attrs["envelope"].mailbox || "INBOX"; // Other providers
-                }
-            });
             msg.on("body", (stream) => {
                 simpleParser(stream, async (err, parsed) => {
                     if (err) return console.error("Parsing error:", err);
 
                     const newEmail = {
                         id: latestUID,
-                        folder: folderName,
+                        folder: "INBOX",
                         date: parsed.date,
                         from: parsed.from.text,
                         to: parsed.to.text,
