@@ -4,9 +4,8 @@ const { activeConnections, connectToIMAP } = require("./imapClient");
 
 const retrieveAllFolders = async (account) => {
     try {
-
         // Check IMAP Conenction
-        if (!activeConnections.has(account.email)) {
+        if (!account.isActiveConnection) {
             console.log("IMAP connection not active for ", account.email, " \nReconnecting...");
             const connectionResult = await connectToIMAP(account);
             console.log(connectionResult);
@@ -18,7 +17,21 @@ const retrieveAllFolders = async (account) => {
                 if (err) {
                     reject(`Error fetching folders: ${err.message}`);
                 }
-                resolve(Object.keys(mailboxes));
+                const allFolders = Object.keys(mailboxes);
+                const updatedFolders = allFolders.map((folder) => {
+                    if (folder === '[Gmail]') {
+                        return [
+                            '[Gmail]/Important',
+                            '[Gmail]/Spam',
+                            '[Gmail]/Sent Mail',
+                            '[Gmail]/Drafts',
+                            '[Gmail]/Trash',
+                            '[Gmail]/Starred', 
+                        ];
+                    }
+                    return [folder];
+                })
+                resolve(updatedFolders.flat());
             })
         })
 
@@ -38,12 +51,13 @@ const fetchEmailsFromFolders = async (account, folders, days = 30) => {
         }
 
         const imapClient = activeConnections.get(account.email);
-        const folderPromises = folders.map((folder) => {
-            return fetchEmailsFromIMAPForSpecificFolder(imapClient, folder, days);
-        })
-        const folderEmails = await Promise.all(folderPromises);
-        return folderEmails.flat();
-    
+        let allEmails = [];
+        for (const folder of folders) {
+            const folderEmails = await fetchEmailsFromIMAPForSpecificFolder(imapClient, folder, days);
+            allEmails = allEmails.concat(folderEmails);
+        }
+        return allEmails;
+
     } catch (error) {
         
         throw new Error(`Failed to fetch emails: ${error.message}`);
@@ -57,14 +71,16 @@ const fetchEmailsFromIMAPForSpecificFolder = async (imapClient, folder, days) =>
                 if (err) {
                     reject(`Error opening mailbox: ${err.message}`);
                 }
+                console.log(`Opened ${folder} mailbox with ${mailbox.messages.total} messages`);
                 const sinceDate = new Date();
                 sinceDate.setDate(sinceDate.getDate() - days);
-                const searchCriteria = [["SINCE", sinceDate.toISOString()]];
+                const formattedSinceDate = `${sinceDate.getFullYear()}-${String(sinceDate.getMonth() + 1).padStart(2, '0')}-${String(sinceDate.getDate()).padStart(2, '0')}`;
+                const searchCriteria = [['SINCE', formattedSinceDate]];
                 const fetchOptions = {
                     bodies: "",
                     struct: true,
+                    markSeen: false,
                 };
-                
                 imapClient.search(searchCriteria, (err, searchResults) => {
                     if (err) {
                         reject(`Error searching mailbox: ${err.message}`);
@@ -72,7 +88,7 @@ const fetchEmailsFromIMAPForSpecificFolder = async (imapClient, folder, days) =>
                     if (searchResults.length === 0) {
                         resolve([]);
                     }
-                    
+                    console.log(searchResults);
                     const emailPromises = searchResults.map((messageId) => {
                         return new Promise((resolve, reject) => {
                             const fetch = imapClient.fetch(messageId, fetchOptions);
@@ -91,15 +107,19 @@ const fetchEmailsFromIMAPForSpecificFolder = async (imapClient, folder, days) =>
                                                 text: parsedEmail.text,
                                                 html: parsedEmail.html,
                                             }
+                                            resolve(email);
                                         })
                                         .catch((error) => {
                                             reject(`Error parsing email: ${error.message}`);
                                         })
                                 })
                                 msg.once("end", () => {
-                                    resolve(email);
+                                    // console.log("Finished processing email: ", email);
                                 })
                             })
+                            fetch.once("error", (error) => {
+                                reject(`Fetch error: ${error.message}`);
+                            });
                         })
                     })
                     Promise.all(emailPromises)
@@ -118,7 +138,6 @@ const fetchEmailsFromIMAPForSpecificFolder = async (imapClient, folder, days) =>
         
     }
 }
-
 
 module.exports = {
     retrieveAllFolders,
