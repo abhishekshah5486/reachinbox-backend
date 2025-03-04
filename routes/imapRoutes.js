@@ -8,7 +8,7 @@ router.post('/connect/all/:userId', imapControllers.connectAllIMAPAccounts);
 router.post('/connect/:userId', imapControllers.connectIMAPAccount);
 router.post('/disconnect/:userId', imapControllers.disconnectIMAPAccount);
 // Retrieve IMAP status
-router.get('/status', imapControllers.retrieveIMAPStatus);
+router.get('/status/:userId', imapControllers.retrieveIMAPStatus);
 
 module.exports = router;
 

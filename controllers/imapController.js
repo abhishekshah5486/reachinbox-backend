@@ -146,3 +146,33 @@ exports.disconnectIMAPAccount = async (req, res) => {
         
     }
 }
+
+exports.retrieveIMAPStatus = async (req, res) => {
+    try {
+        const { email } = req.query;
+        const { userId } = req.params;
+
+        const IMAPAccount = await IMAPAccountModel.findOne({email: email, userId: userId});
+        if (!IMAPAccount) {
+            return res.status(400).json({
+                success: false,
+                message: "IMAP account not found."
+            })
+        }
+        const imapStatus = IMAPAccount.isActiveConnection;
+        res.status(200).json({
+            success: true,
+            message: "IMAP status retrieved.",
+            isIMAPConnected: imapStatus
+        })
+
+    } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: "Error retrieving IMAP status. Please try again later.",
+            error: error.message
+        });
+        
+    }
+}
