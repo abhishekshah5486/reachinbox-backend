@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const connect_to_mongodb = require('./config/mongoDB');
 const authRoutes = require('./routes/authRoutes');
 const imapRoutes = require('./routes/imapRoutes');
+const emailRoutes = require('./routes/emailRoutes');
 
 dotenv.config();
 const app = express();
@@ -12,6 +13,7 @@ connect_to_mongodb();
 
 app.use('/api/users', authRoutes);
 app.use('/api/imap', imapRoutes);
+app.use('/api/email', emailRoutes);
 
 
 const PORT = process.env.PORT || 8086;

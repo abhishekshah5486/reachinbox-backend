@@ -71,4 +71,21 @@ const disconnectFromIMAP = async (IMAPAccount) => {
     }
 }
 
-module.exports = { connectToIMAP, disconnectFromIMAP };
+const retrieveIMAPStatus = async (email, userId) => {
+    try {
+        const IMAPAccount = await IMAPAccountModel.findOne({email: email, userId: userId});
+        if (!IMAPAccount) {
+            return "IMAP account not found.";
+        }
+        return IMAPAccount.isActiveConnection;
+    } catch (error) {
+        return error.message;
+    }
+}
+
+module.exports = { 
+    activeConnections,
+    connectToIMAP, 
+    disconnectFromIMAP, 
+    retrieveIMAPStatus,
+};
