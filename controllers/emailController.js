@@ -21,7 +21,6 @@ exports.fetchEmailsForAllAccounts = async (req, res) => {
            const folderPromises = IMAPAccounts.map((account) => {
                return retrieveAllFolders(account);
            })
-           
            const folderResults = await Promise.all(folderPromises);
            emailResults = await Promise.all(IMAPAccounts.map((IMAPAccount, index) => {
                return fetchEmailsFromFolders(IMAPAccount, folderResults[index], days || 30);
@@ -47,6 +46,45 @@ exports.fetchEmailsForAllAccounts = async (req, res) => {
             error: error.message
         });
 
+    }
+}
+
+// Retrieve last 30 days emails from IMAP for a specific account
+exports.fetchEmailsForSpecificAccount = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { email } = req.query;
+        const { folders, days } = req.body;
+
+        const IMAPAccount = await IMAPAccountModel.findOne({email: email, userId: userId});
+        if (!IMAPAccount) {
+            return res.status(400).json({
+                success: false,
+                message: "IMAP account not found."
+            })
+        }
+        let emailResults = null;
+        if (!folders) {
+            const folders = await retrieveAllFolders(IMAPAccount);
+            emailResults = await fetchEmailsFromFolders(IMAPAccount, folders, days || 30);
+        } else {
+            emailResults = await fetchEmailsFromFolders(IMAPAccount, folders, days || 30);
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Emails fetched successfully.",
+            data: emailResults
+        })
+
+    } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: "Error fetching emails. Please try again later.",
+            error: error.message
+        });
+        
     }
 }
 

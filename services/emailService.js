@@ -88,7 +88,7 @@ const fetchEmailsFromIMAPForSpecificFolder = async (imapClient, folder, days) =>
                     if (searchResults.length === 0) {
                         resolve([]);
                     }
-                    console.log(searchResults);
+                    // console.log(searchResults);
                     const emailPromises = searchResults.map((messageId) => {
                         return new Promise((resolve, reject) => {
                             const fetch = imapClient.fetch(messageId, fetchOptions);
