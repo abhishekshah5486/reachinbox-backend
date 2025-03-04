@@ -59,6 +59,11 @@ const IMAPAccountSchema = new mongoose.Schema({
         required: true,
         enum: ['PASSWORD', 'OAUTH'],
     },
+    isActiveConnection: {
+        type: Boolean,
+        required: true,
+        default: false,
+    }
 }, {
     timestamps: true
 })

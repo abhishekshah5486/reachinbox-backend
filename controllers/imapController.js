@@ -1,5 +1,6 @@
-const bcrypt = require('bcryptjs');
+// const bcrypt = require('bcryptjs');
 const IMAPAccountModel = require('../models/IMAPAccountModel');
+const { connectToIMAP } = require('../services/imapClient');
 
 exports.addIMAPAccount = async (req, res) => {
     try {
@@ -7,9 +8,9 @@ exports.addIMAPAccount = async (req, res) => {
         const {email, imapHost, imapPort, imapPassword, imapUsername, tls} = req.body;
         const existingAccount = await IMAPAccountModel.findOne({email: email});
 
-        const saltRounds = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(imapPassword, saltRounds);
-        req.body.imapPassword = hashedPassword;
+        // const saltRounds = await bcrypt.genSalt(10);
+        // const hashedPassword = await bcrypt.hash(imapPassword, saltRounds);
+        // req.body.imapPassword = hashedPassword;
 
         if (existingAccount) {
             
@@ -49,6 +50,39 @@ exports.addIMAPAccount = async (req, res) => {
             success: false,
             message: "Internal Server Error. Please try again later.",
             error: error.message
+        });
+        
+    }
+}
+
+// Connect all IMAP accounts for a user
+exports.connectAllIMAPAccounts = async (req, res) => {
+    try {
+        
+        const { userId } = req.params;
+        const imapAccounts = await IMAPAccountModel.find({userId: userId});
+        console.log(imapAccounts);
+        if (!imapAccounts.length) {
+            return res.status(400).json({
+                success: false,
+                message: "No IMAP accounts found for this user."
+            })
+        }
+        const connectionPromises = imapAccounts.map((imapAccount) => connectToIMAP(imapAccount));
+        const connectionResults = await Promise.all(connectionPromises);
+        console.log(connectionResults);
+
+        res.status(200).json({
+            success: true,
+            message: "IMAP connections established for all accounts."
+        })
+
+    } catch (err) {
+
+        return res.status(500).json({
+            success: false,
+            message: "Error connecting IMAP accounts. Please try again later.",
+            error: err.message
         });
         
     }

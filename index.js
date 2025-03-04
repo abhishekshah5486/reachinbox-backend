@@ -10,8 +10,8 @@ app.use(express.json());
 
 connect_to_mongodb();
 
-app.use('/app/users', authRoutes);
-app.use('/app/users', imapRoutes);
+app.use('/api/users', authRoutes);
+app.use('/api/imap', imapRoutes);
 
 
 const PORT = process.env.PORT || 8086;
