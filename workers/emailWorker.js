@@ -54,6 +54,6 @@ setInterval(async () => {
             console.error(`Error indexing emails to ElasticSearch: ${error.message}`);    
         }
     }
-}, 10000);
+}, 5000);
 
 module.exports = { emailWorker };

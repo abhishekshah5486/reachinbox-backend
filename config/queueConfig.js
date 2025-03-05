@@ -2,9 +2,9 @@ const { Queue } = require('bullmq');
 
 const queue = new Queue('emailQueue', {
     redis: {
-        host: 'localhost',
+        host: 'redis',
         port: 6379
     }    
 });
 
-module.exports = queue;
+module.exports = { queue };

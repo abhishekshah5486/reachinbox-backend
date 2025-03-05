@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const imapRoutes = require('./routes/imapRoutes');
 const emailRoutes = require('./routes/emailRoutes');
 const elasticSearchRoutes = require('./routes/elasticSearchRoutes');
+const { emailWorker } = require('./workers/emailWorker');
 
 dotenv.config();
 const app = express();
@@ -17,7 +18,7 @@ checkElasticSearchConnection()
 .then(() => {
     createElasticIndex();
 });
-
+console.log(queue);
 app.use('/api/users', authRoutes);
 app.use('/api/imap', imapRoutes);
 app.use('/api/email', emailRoutes);

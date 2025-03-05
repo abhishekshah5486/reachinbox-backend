@@ -2,7 +2,7 @@ const Imap = require("imap");
 const { simpleParser } = require("mailparser");
 const { activeConnections, connectToIMAP } = require("./imapClient");
 const { elasticClient } = require("../config/elasticConfig");
-const queue = require("../config/queueConfig");
+const { queue } = require("../config/queueConfig");
 
 const indexName = "emails";
 const retrieveAllFolders = async (account) => {

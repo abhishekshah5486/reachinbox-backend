@@ -118,7 +118,7 @@ exports.filterEmailsByFolder = async (req, res) => {
 }
 
 // Delete emails for a specific user from elastic search
-const deleteEmailsFromElasticSearchByUserId = async (req, res) => {
+exports.deleteEmailsFromElasticSearchByUserId = async (req, res) => {
     try {
 
         const { userId } = req.params;
