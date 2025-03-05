@@ -3,6 +3,7 @@ const { simpleParser } = require('mailparser');
 const IMAPAccountModel = require('../models/IMAPAccountModel');
 const activeConnections = new Map();
 const { elasticClient } = require('../config/elasticConfig');
+const { getQueue } = require('../config/queueConfig');
 
 const indexName = 'emails';
 
@@ -97,7 +98,7 @@ const startIDLE = (email, userId, onNewMail) => {
             console.error("Error opening mailbox: ", err);
             return;
         }
-        imapClient.once("mail", (numNewMsgs) => {
+        imapClient.on("mail", (numNewMsgs) => {
             console.log(`New email detected (${numNewMsgs} new) for ${email}. Fetching latest email...`);
             fetchLatestEmail(imapClient, userId, onNewMail);
         });
@@ -106,8 +107,9 @@ const startIDLE = (email, userId, onNewMail) => {
     });
 }
 
-const fetchLatestEmail = (imapClient, userId, onNewMail) => {
+const fetchLatestEmail = async (imapClient, userId, onNewMail) => {
 
+    const queue = await getQueue();
     imapClient.search(["UNSEEN"], (err, results) => {
         if (err || results.length === 0) return;
         const latestUID = Math.max(...results);
@@ -129,14 +131,20 @@ const fetchLatestEmail = (imapClient, userId, onNewMail) => {
                         text: parsed.text,
                         html: parsed.html,
                     };
-                    // Store the new email in ElasticSearch
-                    await elasticClient.index({
+
+                    const existingEmail = await elasticClient.exists({
                         index: indexName,
                         id: newEmail.id,
-                        body: {...newEmail, userId: userId},
                     });
-                    console.log(`New Email Received: ${parsed.subject}`);
-                    onNewMail(newEmail);
+                    
+                    if (!existingEmail) {
+                        newEmail.isNewMail = true;
+                        console.log(`New Email Received: ${parsed.subject}`);
+                        await queue.add("processEmail", { ...newEmail, userId });
+                        onNewMail(newEmail);
+                    } else {
+                        console.log(`Email already exists: ${parsed.subject}`);
+                    }
                 });
             });
         });

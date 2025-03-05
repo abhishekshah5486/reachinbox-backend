@@ -13,6 +13,7 @@ const emailWorker = new Worker('emailQueue', async (job) => {
 
     const category = await categorizeEmail(email);
     email.category = category;
+    console.log(`Email category: ${category}`);
     allEmails.push(email);
 
     if (allEmails.length >= bulkLimit) {

@@ -13,6 +13,7 @@
   "dependencies": {
     "@elastic/elasticsearch": "^8.17.1",
     "@google/generative-ai": "^0.23.0",
+    "axios": "^1.8.1",
     "bcryptjs": "^3.0.2",
     "bullmq": "^5.41.7",
     "dotenv": "^16.4.7",

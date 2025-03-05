@@ -1,21 +1,29 @@
 # Node.js dependencies
 node_modules/
+npm-debug.log
+yarn-error.log
 package-lock.json
 
 # Environment variables
 .env
+.env.local
+.env.development
+.env.production
+
+# Build files
+dist/
+build/
 
 # Logs
 logs/
 *.log
 
-# Build files
-dist/
+# Docker
+docker-compose.override.yml
 
-# Temporary files
-*.tmp
+# Database dumps
+dump.rdb
 
-# OS/Editor-specific
-.DS_Store
+# VSCode settings
 .vscode/
-.idea/
+
