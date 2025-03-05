@@ -19,6 +19,7 @@
     "express": "^4.21.2",
     "imap": "^0.8.19",
     "imap-simple": "^5.1.0",
+    "ioredis": "^5.5.0",
     "mailparser": "^3.7.2",
     "mongoose": "^8.11.0",
     "openai": "^4.86.1",

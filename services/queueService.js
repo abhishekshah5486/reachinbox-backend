@@ -1,8 +1,9 @@
-const { queue } = require('../config/queueConfig');
+const { getQueue } = require('../config/queueConfig');
+
 
 const clearQueue = async () => {
     try {
-
+        const queue = await getQueue();
         await queue.clean(0, 'completed');
         await queue.clean(0, 'wait');
         await queue.clean(0, 'active');
@@ -11,9 +12,7 @@ const clearQueue = async () => {
         console.log("Queue cleared successfullly.");
 
     } catch (error) {
-
         console.error("Failed to clear queue: ", error.message);
-        
     }
 }
 

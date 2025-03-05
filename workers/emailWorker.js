@@ -1,8 +1,9 @@
 const { Worker } = require('bullmq');
 const { categorizeEmail } = require('../services/emailCategorizer');
 const { elasticClient } = require('../config/elasticConfig');
+const { redisClient } = require('../config/queueConfig');
 
-const allEmails = [];
+let allEmails = [];
 const bulkLimit = 50;
 const indexName = 'emails';
 
@@ -31,6 +32,7 @@ const emailWorker = new Worker('emailQueue', async (job) => {
     }
 
 }, {
+    connection: redisClient,
     limiter: {
         groupKey: 'emailQueue',
         max: 100,
@@ -54,6 +56,6 @@ setInterval(async () => {
             console.error(`Error indexing emails to ElasticSearch: ${error.message}`);    
         }
     }
-}, 5000);
+}, 10000);
 
 module.exports = { emailWorker };

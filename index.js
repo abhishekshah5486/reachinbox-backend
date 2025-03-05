@@ -19,7 +19,7 @@ checkElasticSearchConnection()
 .then(() => {
     createElasticIndex();
 });
-console.log(queue);
+
 app.use('/api/users', authRoutes);
 app.use('/api/imap', imapRoutes);
 app.use('/api/email', emailRoutes);

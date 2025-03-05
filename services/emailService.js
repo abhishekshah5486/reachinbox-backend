@@ -2,9 +2,10 @@ const Imap = require("imap");
 const { simpleParser } = require("mailparser");
 const { activeConnections, connectToIMAP } = require("./imapClient");
 const { elasticClient } = require("../config/elasticConfig");
-const { queue } = require("../config/queueConfig");
+const { getQueue } = require("../config/queueConfig");
 
 const indexName = "emails";
+
 const retrieveAllFolders = async (account) => {
     try {
         // Check IMAP Conenction
@@ -47,6 +48,7 @@ const retrieveAllFolders = async (account) => {
 
 const fetchEmailsFromFolders = async (account, folders, days = 30) => {
     try {
+        const queue = await getQueue();
         if (!account.isActiveConnection) {
             console.log("IMAP connection not active for ", account.email, " \nReconnecting...");
             const connectionResult = await connectToIMAP(account);
