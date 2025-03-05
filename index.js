@@ -8,6 +8,7 @@ const imapRoutes = require('./routes/imapRoutes');
 const emailRoutes = require('./routes/emailRoutes');
 const elasticSearchRoutes = require('./routes/elasticSearchRoutes');
 const { emailWorker } = require('./workers/emailWorker');
+const queueRoutes = require('./routes/queueRoutes');
 
 dotenv.config();
 const app = express();
@@ -23,7 +24,7 @@ app.use('/api/users', authRoutes);
 app.use('/api/imap', imapRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/es', elasticSearchRoutes);
-
+app.use('/api/queue', queueRoutes);
 
 const PORT = process.env.PORT || 8086;
 app.listen(PORT, () => {
