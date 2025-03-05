@@ -32,4 +32,118 @@ const createElasticIndex = async () => {
     }
 }
 
-module.exports = { createElasticIndex };
+const searchEmailsByQuery = async (query) => {
+    if (!query) {
+        return [];
+    }
+    const searchQuery = {
+        index: indexName,
+        body: {
+            query: {
+                multi_match: {
+                    query: query,
+                    fields: ['subject', 'text']
+                }
+            }
+        }
+    }
+
+    const { hits } = await elasticClient.search(searchQuery);
+    return hits.hits.map(hit => hit._source);
+}
+
+const searchEmailsByDateRange = async (startDate, endDate) => {
+    if (!startDate && !endDate) {
+        return [];
+    }
+    else if (!startDate) {
+        const endDateObj = new Date(endDate);
+        // Set start date 30 days before enddate
+        endDateObj.setDate(endDateObj.getDate() - 30);
+        startDate = endDateObj.toISOString().split('T')[0];
+    }
+    else if (!endDate) {
+        // Set enddate to current date
+        endDate = new Date().toISOString().split('T')[0];
+    }
+    const searchQuery = {
+        index: indexName,
+        body: {
+            query: {
+                range: {
+                    date: {
+                        gte: startDate,
+                        lte: endDate
+                    }
+                }
+            },
+            sort: {
+                date: {
+                    order: 'desc'
+                }
+            }
+        }
+    }
+
+    const { hits } = await elasticClient.search(searchQuery);
+    return hits.hits.map(hit => hit._source);
+}
+
+const filterEmailsByFolderAndAccount = async (folder, email) => {
+    const mustClauses = [];
+    const filterClauses = [];
+    if (folder) {
+        filterClauses.push({ term: { folder } });
+    }
+    if (email) {
+        mustClauses.push({ match: { from: email } });
+    }
+    const searchQuery = {
+        index: indexName,
+        body: {
+            query: {
+                bool: {
+                    must: mustClauses,
+                    filter: filterClauses
+                }
+            }
+        }
+    }
+    const { hits } = await elasticClient.search(searchQuery);
+    return hits.hits.map(hit => hit._source);
+}
+
+const filterEmailsByFolder = async (folder) => {
+    const searchQuery = {
+        index: indexName,
+        body: {
+            query: {
+                term: { folder }
+            }
+        }
+    }
+    const { hits } = await elasticClient.search(searchQuery);
+    return hits.hits.map(hit => hit._source);
+}
+
+const filterEmailsByAccount = async (email) => {
+    const searchQuery = {
+        index: indexName,
+        body: {
+            query: {
+                match: { from: email }
+            }
+        }
+    }
+    const { hits } = await elasticClient.search(searchQuery);
+    return hits.hits.map(hit => hit._source);
+}
+
+module.exports = { 
+    createElasticIndex,
+    searchEmailsByDateRange,
+    searchEmailsByQuery,
+    filterEmailsByFolderAndAccount,
+    filterEmailsByFolder,
+    filterEmailsByAccount,
+};
