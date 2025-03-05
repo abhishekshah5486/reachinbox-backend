@@ -2,6 +2,7 @@ const { Worker } = require('bullmq');
 const { categorizeEmail } = require('../services/emailCategorizer');
 const { elasticClient } = require('../config/elasticConfig');
 const { redisClient } = require('../config/queueConfig');
+const { sendSlackNotification } = require('../services/slackNotifier');
 
 let allEmails = [];
 const bulkLimit = 50;
@@ -14,6 +15,14 @@ const emailWorker = new Worker('emailQueue', async (job) => {
     const category = await categorizeEmail(email);
     email.category = category;
     console.log(`Email category: ${category}`);
+
+    if (category.toUpperCase() === 'INTERESTED') {
+        try {
+            sendSlackNotification(email);
+        } catch (error) {
+            console.log(`Error sending slack notification: ${error.message}`);
+        }
+    }
     allEmails.push(email);
 
     if (allEmails.length >= bulkLimit) {
