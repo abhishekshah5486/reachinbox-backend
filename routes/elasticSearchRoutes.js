@@ -12,5 +12,7 @@ router.post('/filter/folder/:userId', elasticSearchControllers.filterEmailsByFol
 router.post('/search/account/:userId', elasticSearchControllers.filterEmailsByAccount);
 // Route to filter emails by folder and account for a userId
 router.post('/filter/folder/account/:userId', elasticSearchControllers.filterEmailsByFolderAndAccount);
+// Route to delete emails from elastic search for a userId
+router.delete('/delete/:userId', elasticSearchControllers.deleteEmailsFromElasticSearchByUserId);
 
 module.exports = router;
