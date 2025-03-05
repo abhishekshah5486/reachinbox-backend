@@ -1,7 +1,9 @@
 const Imap = require("imap");
 const { simpleParser } = require("mailparser");
 const { activeConnections, connectToIMAP } = require("./imapClient");
+const { elasticClient } = require("../config/elasticConfig");
 
+const indexName = "emails";
 const retrieveAllFolders = async (account) => {
     try {
         // Check IMAP Conenction
@@ -56,6 +58,23 @@ const fetchEmailsFromFolders = async (account, folders, days = 30) => {
             const folderEmails = await fetchEmailsFromIMAPForSpecificFolder(imapClient, folder, days);
             allEmails = allEmails.concat(folderEmails);
         }
+        // Store all the emails in ElasticSearch in bulk
+        if (allEmails.length > 0) {
+            try {
+                await elasticClient.bulk({
+                    index: indexName,
+                    body: allEmails.flatMap((email) => {
+                        return [
+                            { index: { _id: email.id } },
+                            email,
+                        ]
+                    })
+                });
+                console.log(`Stored ${allEmails.length} emails in ElasticSearch`);
+            } catch (err) {
+                console.log(`Error storing emails in ElasticSearch: ${err.message}`);
+            }
+        }
         return allEmails;
 
     } catch (error) {
@@ -106,7 +125,7 @@ const fetchEmailsFromIMAPForSpecificFolder = async (imapClient, folder, days) =>
                                                 subject: parsedEmail.subject,
                                                 text: parsedEmail.text,
                                                 html: parsedEmail.html,
-                                            }
+                                            }                                           
                                             resolve(email);
                                         })
                                         .catch((error) => {
