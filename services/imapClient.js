@@ -2,6 +2,9 @@ const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 const IMAPAccountModel = require('../models/IMAPAccountModel');
 const activeConnections = new Map();
+const { elasticClient } = require('../config/elasticConfig');
+
+const indexName = 'emails';
 
 const connectToIMAP = async (IMAPAccount) => {
 
@@ -126,7 +129,12 @@ const fetchLatestEmail = (imapClient, onNewMail) => {
                         text: parsed.text,
                         html: parsed.html,
                     };
-
+                    // Store the new email in ElasticSearch
+                    await elasticClient.index({
+                        index: indexName,
+                        id: newEmail.id,
+                        body: newEmail,
+                    });
                     console.log(`New Email Received: ${parsed.subject}`);
                     onNewMail(newEmail);
                 });
