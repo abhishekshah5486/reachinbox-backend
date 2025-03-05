@@ -33,7 +33,7 @@ const createElasticIndex = async () => {
     }
 }
 
-const searchEmailsByQuery = async (userId, query) => {
+const searchEmailsByQuery = async (query, userId) => {
     if (!query) {
         return [];
     }

@@ -12,6 +12,12 @@ exports.searchEmailsByQuery = async (req, res) => {
             searchResults: searchResults
         })
     } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: "Error searching emails. Please try again later.",
+            error: error.message
+        });
         
     }
 }
