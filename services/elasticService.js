@@ -6,7 +6,7 @@ const createElasticIndex = async () => {
     try {
         const indexExists = await elasticClient.indices.exists({index: indexName});
 
-        if (!indexExists.body) {
+        if (!indexExists) {
             await elasticClient.indices.create({
                 index: indexName,
                 body: {
@@ -60,7 +60,7 @@ const searchEmailsByQuery = async (query, userId) => {
     return hits.hits.map(hit => hit._source);
 }
 
-const searchEmailsByDateRange = async (userId, startDate, endDate) => {
+const searchEmailsByDateRange = async (startDate, endDate, userId) => {
     if (!startDate && !endDate) {
         return [];
     }
