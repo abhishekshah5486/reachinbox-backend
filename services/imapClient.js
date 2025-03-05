@@ -86,7 +86,7 @@ const retrieveIMAPStatus = async (email, userId) => {
     }
 }
 
-const startIDLE = (email, onNewMail) => {
+const startIDLE = (email, userId, onNewMail) => {
     if (!activeConnections.has(email)) {
         console.error( `IMAP connection not active for ${email}`);
         return;
@@ -99,14 +99,14 @@ const startIDLE = (email, onNewMail) => {
         }
         imapClient.once("mail", (numNewMsgs) => {
             console.log(`New email detected (${numNewMsgs} new) for ${email}. Fetching latest email...`);
-            fetchLatestEmail(imapClient, onNewMail);
+            fetchLatestEmail(imapClient, userId, onNewMail);
         });
         console.log(`IDLE started for ${email}`);
 
     });
 }
 
-const fetchLatestEmail = (imapClient, onNewMail) => {
+const fetchLatestEmail = (imapClient, userId, onNewMail) => {
 
     imapClient.search(["UNSEEN"], (err, results) => {
         if (err || results.length === 0) return;
@@ -133,7 +133,7 @@ const fetchLatestEmail = (imapClient, onNewMail) => {
                     await elasticClient.index({
                         index: indexName,
                         id: newEmail.id,
-                        body: newEmail,
+                        body: {...newEmail, userId: userId},
                     });
                     console.log(`New Email Received: ${parsed.subject}`);
                     onNewMail(newEmail);

@@ -6,13 +6,14 @@ const createElasticIndex = async () => {
     try {
         const indexExists = await elasticClient.indices.exists({index: indexName});
 
-        if (!indexExists) {
+        if (!indexExists.body) {
             await elasticClient.indices.create({
                 index: indexName,
                 body: {
                     mappings: {
                         properties: {
                             id: { type: 'keyword' },
+                            userId: { type: 'keyword' },
                             folder: { type: 'keyword' },
                             date: { type: 'date' },
                             from: { type: 'text' },
@@ -32,7 +33,7 @@ const createElasticIndex = async () => {
     }
 }
 
-const searchEmailsByQuery = async (query) => {
+const searchEmailsByQuery = async (userId, query) => {
     if (!query) {
         return [];
     }
@@ -40,9 +41,16 @@ const searchEmailsByQuery = async (query) => {
         index: indexName,
         body: {
             query: {
-                multi_match: {
-                    query: query,
-                    fields: ['subject', 'text']
+                bool: {
+                    must: [
+                        {
+                            multi_match: {
+                                query: query,
+                                fields: ['subject', 'text']
+                            }
+                        }
+                    ],
+                    filter: [{term: { userId: userId }}]
                 }
             }
         }
@@ -52,7 +60,7 @@ const searchEmailsByQuery = async (query) => {
     return hits.hits.map(hit => hit._source);
 }
 
-const searchEmailsByDateRange = async (startDate, endDate) => {
+const searchEmailsByDateRange = async (userId, startDate, endDate) => {
     if (!startDate && !endDate) {
         return [];
     }
@@ -70,11 +78,16 @@ const searchEmailsByDateRange = async (startDate, endDate) => {
         index: indexName,
         body: {
             query: {
-                range: {
-                    date: {
-                        gte: startDate,
-                        lte: endDate
-                    }
+                bool: {
+                    filter: [
+                        {term: { userId: userId }},
+                        {range: {
+                            date: {
+                                gte: startDate,
+                                lte: endDate
+                            }
+                        }}
+                    ],
                 }
             },
             sort: {
@@ -89,9 +102,9 @@ const searchEmailsByDateRange = async (startDate, endDate) => {
     return hits.hits.map(hit => hit._source);
 }
 
-const filterEmailsByFolderAndAccount = async (folder, email) => {
+const filterEmailsByFolderAndAccount = async (userId, folder, email) => {
     const mustClauses = [];
-    const filterClauses = [];
+    const filterClauses = [{ term: { userId: userId } }];
     if (folder) {
         filterClauses.push({ term: { folder } });
     }
@@ -113,12 +126,17 @@ const filterEmailsByFolderAndAccount = async (folder, email) => {
     return hits.hits.map(hit => hit._source);
 }
 
-const filterEmailsByFolder = async (folder) => {
+const filterEmailsByFolder = async (userId, folder) => {
     const searchQuery = {
         index: indexName,
         body: {
             query: {
-                term: { folder }
+                bool: {
+                    filter: [
+                        {term: { userId: userId }},
+                        {term: { folder }},
+                    ]
+                }
             }
         }
     }
@@ -126,12 +144,15 @@ const filterEmailsByFolder = async (folder) => {
     return hits.hits.map(hit => hit._source);
 }
 
-const filterEmailsByAccount = async (email) => {
+const filterEmailsByAccount = async (userId, email) => {
     const searchQuery = {
         index: indexName,
         body: {
             query: {
-                match: { from: email }
+                bool: {
+                    filter: [{term: { userId: userId }}],
+                    must: [{match: { from: email }}],
+                }
             }
         }
     }

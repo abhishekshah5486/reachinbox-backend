@@ -6,6 +6,7 @@ const { createElasticIndex } = require('./services/elasticService');
 const authRoutes = require('./routes/authRoutes');
 const imapRoutes = require('./routes/imapRoutes');
 const emailRoutes = require('./routes/emailRoutes');
+const elasticSearchRoutes = require('./routes/elasticSearchRoutes');
 
 dotenv.config();
 const app = express();
@@ -20,6 +21,7 @@ checkElasticSearchConnection()
 app.use('/api/users', authRoutes);
 app.use('/api/imap', imapRoutes);
 app.use('/api/email', emailRoutes);
+app.use('/api/es', elasticSearchRoutes);
 
 
 const PORT = process.env.PORT || 8086;

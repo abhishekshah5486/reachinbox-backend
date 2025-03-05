@@ -203,7 +203,7 @@ exports.enableRealTimeUpdates = async (req, res) => {
         res.setHeader("Connection", "keep-alive");
 
         // Start IDLE
-        startIDLE(email, (newMail) => {
+        startIDLE(email, IMAPAccount.userId, (newMail) => {
             res.write(`data: ${JSON.stringify(newMail)}\n\n`);
         });
         

@@ -66,7 +66,7 @@ const fetchEmailsFromFolders = async (account, folders, days = 30) => {
                     body: allEmails.flatMap((email) => {
                         return [
                             { index: { _id: email.id } },
-                            email,
+                            {...email, userId: account.userId},
                         ]
                     })
                 });
