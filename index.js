@@ -1,6 +1,8 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const connect_to_mongodb = require('./config/mongoDB');
+const { checkElasticSearchConnection } = require('./config/elasticConfig');
+const { createElasticIndex } = require('./services/elasticService');
 const authRoutes = require('./routes/authRoutes');
 const imapRoutes = require('./routes/imapRoutes');
 const emailRoutes = require('./routes/emailRoutes');
@@ -10,6 +12,10 @@ const app = express();
 app.use(express.json());
 
 connect_to_mongodb();
+checkElasticSearchConnection()
+.then(() => {
+    createElasticIndex();
+});
 
 app.use('/api/users', authRoutes);
 app.use('/api/imap', imapRoutes);
