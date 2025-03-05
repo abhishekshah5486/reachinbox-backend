@@ -116,3 +116,5 @@ exports.filterEmailsByFolder = async (req, res) => {
         
     }
 }
+
+// Delete emails for a specific user from elastic search

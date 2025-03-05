@@ -37,3 +37,23 @@ const emailWorker = new Worker('emailQueue', async (job) => {
         duration: 1000
     }
 });
+
+setInterval(async () => {
+    if (allEmails.length > 0) {
+        try {
+            await elasticClient.bulk({
+                index: indexName,
+                body: allEmails.flatMap(email => [
+                    { index: { _id: email.id } },
+                    email
+                ])
+            });
+            console.log(`Bulk indexed ${allEmails.length} emails to ElasticSearch`);
+            allEmails = [];
+        } catch (error) {
+            console.error(`Error indexing emails to ElasticSearch: ${error.message}`);    
+        }
+    }
+}, 10000);
+
+module.exports = { emailWorker };

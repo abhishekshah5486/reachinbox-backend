@@ -160,6 +160,19 @@ const filterEmailsByAccount = async (userId, email) => {
     return hits.hits.map(hit => hit._source);
 }
 
+const deleteEmailsFromElasticSearchByUserId = async (userId) => {
+    const deleteQuery = {
+        index: indexName,
+        body: {
+            query: {
+                term: { userId: userId }
+            }
+        }
+    }
+    const result = await elasticClient.deleteByQuery(deleteQuery);
+    return result;
+}
+
 module.exports = { 
     createElasticIndex,
     searchEmailsByDateRange,
@@ -167,4 +180,5 @@ module.exports = {
     filterEmailsByFolderAndAccount,
     filterEmailsByFolder,
     filterEmailsByAccount,
+    deleteEmailsFromElasticSearchByUserId,
 };
