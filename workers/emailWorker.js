@@ -3,6 +3,7 @@ const { categorizeEmail } = require('../services/emailCategorizer');
 const { elasticClient } = require('../config/elasticConfig');
 const { redisClient } = require('../config/queueConfig');
 const { sendSlackNotification } = require('../services/slackNotifier');
+const { triggerWebhook } = require('../services/webhookNotifier');
 
 let allEmails = [];
 const bulkLimit = 50;
@@ -19,6 +20,7 @@ const emailWorker = new Worker('emailQueue', async (job) => {
     if (category.toUpperCase() === 'INTERESTED') {
         try {
             sendSlackNotification(email);
+            triggerWebhook(email);
         } catch (error) {
             console.log(`Error sending slack notification: ${error.message}`);
         }
