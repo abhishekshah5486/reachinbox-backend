@@ -17,7 +17,7 @@ const emailWorker = new Worker('emailQueue', async (job) => {
     email.category = category;
     console.log(`Email category: ${category}`);
 
-    if (category.toUpperCase() === 'INTERESTED') {
+    if (category.toUpperCase() === 'INTERESTED' && (email.isNewMail && email.isNewMail === true)) {
         try {
             sendSlackNotification(email);
             triggerWebhook(email);

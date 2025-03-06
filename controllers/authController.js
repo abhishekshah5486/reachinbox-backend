@@ -60,10 +60,13 @@ exports.login_user = async (req, res) => {
                 resolution: "Please try again"
             });
         }
+        // Update isLoggedIn status
+        const updatedUser = await userModel.findOneAndUpdate({email: email}, {isLoggedIn: true}, {new: true});
+
         return res.status(200).json({
             success: true,
             message: "Login successful",
-            data: existingUser
+            data: updatedUser
         });
     }
     catch (error) {

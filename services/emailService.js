@@ -8,6 +8,7 @@ const indexName = "emails";
 
 const retrieveAllFolders = async (account) => {
     try {
+        console.log(activeConnections);
         // Check IMAP Conenction
         if (!account.isActiveConnection) {
             console.log("IMAP connection not active for ", account.email, " \nReconnecting...");
