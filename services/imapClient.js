@@ -21,10 +21,10 @@ const connectToIMAP = async (IMAPAccount) => {
     const IMAPPromise = new Promise((resolve, reject) => {
         try {
 
-            // if (IMAPAccount.isActiveConnection) {
-            //     console.log("IMAP Account is already connected");
-            //     return resolve(`IMAP connection already active for ${IMAPAccount.email}`);
-            // }
+            if (IMAPAccount.isActiveConnection) {
+                console.log("IMAP Account is already connected");
+                return resolve(`IMAP connection already active for ${IMAPAccount.email}`);
+            }
         
             imapClient.once("ready", async () => {
                 console.log("IMAP active for ", IMAPAccount.email);
